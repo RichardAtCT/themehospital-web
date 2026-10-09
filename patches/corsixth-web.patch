@@ -1,0 +1,55 @@
+diff --git a/CorsixTH/Src/sdl_audio.cpp b/CorsixTH/Src/sdl_audio.cpp
+index 7ba8acb8..5d78b452 100644
+--- a/CorsixTH/Src/sdl_audio.cpp
++++ b/CorsixTH/Src/sdl_audio.cpp
+@@ -166,8 +166,15 @@ int l_load_music_async(lua_State* L) {
+       call the callback and remove the new entries from the registry.
+   */
+ 
++#ifdef __EMSCRIPTEN__
++  // No threads in the browser build: decode now, the completion event is
++  // still delivered through the main loop as usual.
++  async->thread = nullptr;
++  load_music_async_thread(async);
++#else
+   async->thread =
+       SDL_CreateThread(load_music_async_thread, "music_thread", async);
++#endif
+ 
+   return 0;
+ }
+diff --git a/CorsixTH/Src/sdl_core.cpp b/CorsixTH/Src/sdl_core.cpp
+index 7c9cf342..6b25b7f0 100644
+--- a/CorsixTH/Src/sdl_core.cpp
++++ b/CorsixTH/Src/sdl_core.cpp
+@@ -297,6 +297,16 @@ constexpr std::string_view dispatch_window_maximised("window_maximised");
+ constexpr std::string_view dispatch_window_restored("window_restored");
+ constexpr std::string_view dispatch_frame("frame");
+ 
++#ifdef __EMSCRIPTEN__
++#include <emscripten.h>
++namespace {
++bool web_wait_event(SDL_Event* e) {
++  while (!SDL_PollEvent(e)) emscripten_sleep(2);
++  return true;
++}
++}  // namespace
++#endif
++
+ void mainloop(lua_State* L) {
+   SDL_TimerID timer =
+       SDL_AddTimer(usertick_period_ms, timer_frame_callback, nullptr);
+@@ -319,7 +329,13 @@ void mainloop(lua_State* L) {
+   lua_getfield(L, -1, "video");
+   render_target* target = static_cast<render_target*>(lua_touserdata(L, -1));
+ 
++#ifdef __EMSCRIPTEN__
++  // Browser: give control back to the page between events (JSPI suspends
++  // this whole call stack, Lua included) so SDL's timers and input run.
++  while ((wait_error = web_wait_event(&e))) {
++#else
+   while ((wait_error = SDL_WaitEvent(&e))) {
++#endif
+     bool do_frame = false;
+     bool do_timer = false;
+ 

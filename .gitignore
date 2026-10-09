@@ -1,0 +1,8 @@
+# Build output and local game data: never commit Theme Hospital files.
+build/
+downloads/
+game/
+# Third-party sources are fetched by tools/fetch-deps.sh (CorsixTH changes live in patches/).
+third_party/
+.DS_Store
+node_modules/

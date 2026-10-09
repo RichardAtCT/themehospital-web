@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Theme Hospital</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 34 34%27%3E%3Crect x=%2712%27 y=%272%27 width=%2710%27 height=%2730%27 rx=%272%27 fill=%27%232f8f6b%27/%3E%3Crect x=%272%27 y=%2712%27 width=%2730%27 height=%2710%27 rx=%272%27 fill=%27%232f8f6b%27/%3E%3C/svg%3E">
+<meta name="description" content="Theme Hospital in your browser, using the CorsixTH engine and your own copy of the game files.">
+<style>
+  :root {
+    --bg: #0d2a2e; --panel: #f4f1e6; --ink: #1d2b2c; --muted: #5b6a6a;
+    --accent: #2f8f6b; --accent-ink: #fff; --line: #d8d2bf; --warn: #a33b2b;
+  }
+  html, body { margin: 0; height: 100%; background: #000; color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; overflow: hidden; }
+  #canvas { display: block; width: 100vw; height: 100vh; outline: none; }
+  #status { position: fixed; left: 10px; bottom: 8px; color: #cfd; opacity: .8; pointer-events: none; font-size: 13px; }
+
+  #setup { position: fixed; inset: 0; overflow: auto; background:
+      radial-gradient(1200px 600px at 20% -10%, #1f5a55 0%, transparent 60%),
+      repeating-linear-gradient(45deg, #0f3236 0 24px, #0d2a2e 24px 48px); }
+  #setup[hidden] { display: none; }
+  .card { box-sizing: border-box; max-width: 640px; margin: 6vh auto; padding: 28px 32px; background: var(--panel);
+    border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,.45); }
+  @media (max-width: 680px) { .card { margin: 16px; padding: 20px 18px; } }
+  h1 { margin: 0; font-size: 30px; letter-spacing: -.01em; display: flex; align-items: center; gap: 12px; }
+  .cross { width: 34px; height: 34px; flex: none; }
+  .tag { margin: 6px 0 18px; color: var(--muted); }
+  ol { padding-left: 1.3em; margin: 0 0 16px; }
+  li { margin: 0 0 10px; }
+  code { background: #e8e3d1; padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+  a { color: #1d6f53; }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; margin: 6px 0 4px; }
+  button, .btn { font: inherit; border: 1px solid var(--line); background: #fff; color: var(--ink); padding: 9px 16px;
+    border-radius: 9px; cursor: pointer; }
+  button:hover, .btn:hover { border-color: #b5ad93; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  button.play { font-size: 19px; padding: 12px 34px; }
+  button:disabled { opacity: .55; cursor: default; }
+  .bar { height: 8px; background: #e2dccb; border-radius: 5px; overflow: hidden; margin: 12px 0 4px; }
+  .bar > div { height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+  .small { font-size: 13px; color: var(--muted); }
+  .err { color: var(--warn); }
+  .foot { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+  input[type=file] { display: none; }
+
+  #menu { position: fixed; top: 10px; right: 10px; width: 300px; max-width: calc(100vw - 20px); background: var(--panel);
+    border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,.5); padding: 16px 18px; box-sizing: border-box; }
+  #menu[hidden] { display: none; }
+  #menu h2 { margin: 0 0 8px; font-size: 17px; }
+  #menu ul { list-style: none; padding: 0; margin: 0 0 10px; max-height: 40vh; overflow: auto; }
+  #menu li { display: flex; justify-content: space-between; gap: 8px; margin: 0; padding: 4px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+  #menu .col { display: flex; flex-direction: column; gap: 8px; }
+  #menubtn { position: fixed; top: 6px; right: 6px; width: 28px; height: 28px; padding: 0; border-radius: 7px;
+    background: rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.25); color: #fff; opacity: .35; font-size: 15px; line-height: 1; }
+  #menubtn:hover { opacity: 1; }
+  #menubtn[hidden] { display: none; }
+</style>
+</head>
+<body>
+<canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
+<div id="status"></div>
+
+<div id="setup">
+  <div class="card">
+    <h1><svg class="cross" viewBox="0 0 34 34" aria-hidden="true"><rect x="12" y="2" width="10" height="30" rx="2" fill="#2f8f6b"/><rect x="2" y="12" width="30" height="10" rx="2" fill="#2f8f6b"/></svg>Theme Hospital</h1>
+    <p class="tag">Bullfrog's 1997 classic, running in your browser on the open-source CorsixTH engine. You bring the game files; nothing is uploaded anywhere.</p>
+
+    <div id="ready" hidden>
+      <div class="row"><button type="button" class="primary play" id="play">Open the hospital</button></div>
+      <p class="small" id="readyinfo"></p>
+      <p class="small"><a href="#" id="again">Use different game files</a></p>
+    </div>
+
+    <div id="install">
+      <ol>
+        <li><strong>Own it?</strong> Theme Hospital is sold on <a href="https://www.gog.com/en/game/theme_hospital" target="_blank" rel="noopener">GOG</a>. After installing it, pick the game's folder below.</li>
+        <li><strong>Or</strong> download the MS-DOS copy from the <a href="https://archive.org/details/msdos_Theme_Hospital_1997" target="_blank" rel="noopener">Internet Archive</a> (<code>Theme_Hospital_1997.zip</code>, about 225 MB) and pick the zip. A CD image (<code>.iso</code>) works too.</li>
+        <li><strong>Just trying it?</strong> The free official <a href="https://th.corsix.org/Demo.zip">demo</a> (13 MB) has one level. Pick its zip.</li>
+      </ol>
+      <div class="row">
+        <button type="button" class="primary" id="pickfile">Choose a .zip or .iso…</button>
+        <button type="button" id="pickdir">Choose the game folder…</button>
+      </div>
+      <input id="file" type="file" accept=".zip,.iso,application/zip">
+      <input id="dir" type="file" webkitdirectory>
+      <div id="progress" hidden><div class="bar"><div></div></div><div class="small" id="ptext"></div></div>
+      <p class="err" id="err" hidden></p>
+    </div>
+
+    <div class="foot small">
+      <p>Your hospital is saved in this browser. In the game, the <strong>☰</strong> button at the top right (or <strong>Ctrl+F8</strong>) lets you download or import saves and change game files. Works best in a recent Chrome or Edge.</p>
+      <p>An unofficial fan project, not affiliated with Electronic Arts or Bullfrog. Runs <a href="https://github.com/CorsixTH/CorsixTH" target="_blank" rel="noopener">CorsixTH</a> (MIT licence). This page hosts none of the original game's files. <a href="https://github.com/RichardAtCT/themehospital-web" target="_blank" rel="noopener">Source</a>.</p>
+    </div>
+  </div>
+</div>
+
+<button type="button" id="menubtn" title="Saves and settings (Ctrl+F8)" hidden>☰</button>
+<div id="menu" hidden>
+  <h2>Saved games</h2>
+  <ul id="saves"></ul>
+  <div class="col">
+    <button type="button" id="importsave">Import a save…</button>
+    <input id="savefile" type="file" accept=".sav" multiple>
+    <button type="button" id="change">Use different game files…</button>
+    <button type="button" id="closemenu">Close</button>
+  </div>
+</div>
+
+<script>
+var Module = {
+  canvas: document.getElementById('canvas'),
+  print: (t) => console.log(t),
+  printErr: (t) => console.warn(t),
+  setStatus: (t) => { document.getElementById('status').textContent = t; },
+  // libc reads the environment before onRuntimeInitialized, so set it here.
+  preRun: [(m) => { m.ENV.HOME = '/persist'; m.ENV.USER = 'Player'; }],
+  onRuntimeInitialized() { window.thRuntimeReady(); },
+};
+</script>
+<script src="boot.js"></script>
+{{{ SCRIPT }}}
+</body>
+</html>

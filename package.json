@@ -1,0 +1,9 @@
+{
+  "name": "themehospital-web",
+  "private": true,
+  "type": "module",
+  "description": "Dev tooling (headless Chrome checks) for the CorsixTH browser build",
+  "devDependencies": {
+    "playwright-core": "^1.56.0"
+  }
+}
